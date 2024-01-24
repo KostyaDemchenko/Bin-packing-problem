@@ -1,3 +1,4 @@
+
 function potpack(boxes) {
     // calculate total box area and maximum box width
     let area = 0
@@ -93,27 +94,35 @@ function potpack(boxes) {
     }
 }
 
+async function readBlockDimensionsFromFile() {
+    const filePath = './blocks.json'; // Specify the relative path to your JSON file
+    try {
+        const response = await fetch(filePath);
+        const dimensions = await response.json();
+        return dimensions;
+    } catch (error) {
+        console.error("Error reading block dimensions from file:", error);
+        throw error;
+    }
+}
+
 async function main() {
-    const DRAW_TEXT = Math.random() > .5
+    const DRAW_TEXT = Math.random() > 0.5;
 
-    const boxes = []
-    const sizes = [8, 16, 32, 64] // [8,16,32,64]
-    const N = 256 // 1024 // 4096 // 256
+    const boxes = [];
+    const blockDimensions = await readBlockDimensionsFromFile();
+    const N = blockDimensions.length;
 
-    for (let i = 0; i < N; i++) {
-        add_a_box:
-        {
-            let w = sizes[Math.random() * sizes.length | 0]
-            let h = Math.random() > 0.75 ? 1 << (3 + Math.random() * 4 | 0) : w // square the 75% of the times.
-            let c = `hsl(${Math.random() * 360 | 0}, 45%, 75%)`
-            let box = { w, h, i, c }
-            boxes.push(box)
-        }
+    for (let i = 0; i < blockDimensions.length; i++) {
+        const { width, height } = blockDimensions[i];
+        const c = `hsl(${Math.random() * 360 | 0}, 45%, 75%)`;
+        const box = { w: width, h: height, i, c };
+        boxes.push(box);
 
-        const t0 = performance.now()
-        const result = potpack(boxes)
-        const t1 = performance.now()
-        const { w, h, fill } = result
+        const t0 = performance.now();
+        const result = potpack(boxes);
+        const t1 = performance.now();
+        const { w, h, fill } = result;
 
         const aspect = w / h
         canvas.width = w * dpr
@@ -180,17 +189,16 @@ async function main() {
                 3
             )
 
-        await new Promise(r => requestAnimationFrame(() => { r() }))
+        await new Promise(r => requestAnimationFrame(() => { r() }));
     }
 }
 
-let dpr = window.devicePixelRatio
-const ctx = canvas.getContext('2d')
-
+let dpr = window.devicePixelRatio;
+const ctx = canvas.getContext('2d');
 
 main().then(() => {
-    console.log('ok')
+    console.log('ok');
 }).catch(error => {
-    console.error(error.name, error.message)
-})
+    console.error(error.name, error.message);
+});
 

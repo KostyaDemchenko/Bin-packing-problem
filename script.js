@@ -138,10 +138,9 @@ async function main() {
         ctx.save()
         ctx.scale(dpr, dpr)
         ctx.lineWidth = 0.5
-        ctx.strokeStyle = 'rgba(127,127,127,.5)'
+        ctx.strokeStyle = ''
         ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.font = '8px ui-monospace'
+        ctx.font = '8px'
         for (const box of boxes) {
             ctx.save()
             ctx.translate(box.x, box.y)
@@ -152,16 +151,12 @@ async function main() {
             ctx.lineTo(box.w, 0)
             ctx.lineTo(box.w, box.h)
             ctx.lineTo(0, box.h)
-            ctx.closePath()
-            ctx.moveTo(0, 0)
             ctx.lineTo(box.w, box.h)
-            ctx.moveTo(0, box.h)
-            ctx.lineTo(box.w, 0)
             ctx.stroke()
 
             if (DRAW_TEXT) {
                 ctx.fillStyle = 'black'
-                ctx.font = `${Math.min(box.w, box.h) * 0.5}px ui-monospace`
+                ctx.font = `${Math.min(box.w, box.h) * 0.5}px`
                 ctx.fillText(box.i.toString(16).padStart(2, '0').toUpperCase(), box.w / 2, box.h / 2)
             }
 

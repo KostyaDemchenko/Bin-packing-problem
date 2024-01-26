@@ -217,3 +217,8 @@ main()
     .catch((error) => {
         console.error(error.name, error.message);
     });
+
+
+// todo
+// привети код в порядок (полностью его просмотреть)
+// привести коментарии в порядок

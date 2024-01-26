@@ -113,17 +113,30 @@ async function main() {
     // Зчитування розмірів блоків з файлу
     const blockDimensions = await readBlockDimensionsFromFile();
 
+    // Об'єкт для відстеження кольорів блоків за їхнім розміром
+    const colorMap = {};
+
     // Кількість блоків
     const N = blockDimensions.length;
 
     // Цикл для обробки кожного блоку
     for (let i = 0; i < N; i++) {
-        // Отримання розмірів та кольору для поточного блоку
+        // Отримання розмірів для поточного блоку
         const { width, height } = blockDimensions[i];
-        const c = `hsl(${Math.random() * 360 | 0}, 45%, 75%)`;
 
         // Створення об'єкта блока та додавання його до масиву
-        const box = { w: width, h: height, i: i + 1, c };
+        const box = { w: width, h: height, i: i + 1 };
+
+        // Визначення кольору блока відповідно до його розміру
+        if (!(width in colorMap) || !(height in colorMap[width])) {
+            const c = `hsl(${Math.random() * 360 | 0}, 45%, 75%)`;
+            colorMap[width] = { ...colorMap[width], [height]: c };
+            box.c = c;
+        } else {
+            box.c = colorMap[width][height];
+        }
+
+        // Додавання блока до масиву
         boxes.push(box);
 
         // Вимірювання часу виконання алгоритму упаковки

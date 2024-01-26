@@ -1,199 +1,206 @@
-
 function potpack(boxes) {
-    // calculate total box area and maximum box width
-    let area = 0
-    let maxWidth = 0
+    // Обчислити загальну площу блоків та максимальну ширину блока
+    let area = 0;
+    let maxWidth = 0;
 
     for (const box of boxes) {
-        area += box.w * box.h
-        maxWidth = Math.max(maxWidth, box.w)
+        area += box.w * box.h;
+        maxWidth = Math.max(maxWidth, box.w);
     }
 
-    // sort the boxes for insertion by height, descending
-    boxes.sort((a, b) => b.h - a.h)
+    // Відсортувати блоки за висотою у порядку спадання
+    boxes.sort((a, b) => b.h - a.h);
 
-    // aim for a squarish resulting container,
-    // slightly adjusted for sub-100% space utilization
-    const startWidth = Math.max(Math.ceil(Math.sqrt(area / 0.95)), maxWidth)
+    // Прагнути до квадратного контейнера,
+    // трохи відкоригованого для використання площі менше 100%
+    const startWidth = Math.max(Math.ceil(Math.sqrt(area / 0.95)), maxWidth);
 
-    // start with a single empty space, unbounded at the bottom
-    const spaces = [{ x: 0, y: 0, w: startWidth, h: Infinity }]
+    // Почати з одного порожнього простору, необмеженого знизу
+    const spaces = [{ x: 0, y: 0, w: startWidth, h: Infinity }];
 
-    let width = 0
-    let height = 0
+    let width = 0;
+    let height = 0;
 
     for (const box of boxes) {
-        // look through spaces backwards so that we check smaller spaces first
+        // Проглядати простори назад, щоб спочатку перевірити менші простори
         for (let i = spaces.length - 1; i >= 0; i--) {
-            const space = spaces[i]
+            const space = spaces[i];
 
-            // look for empty spaces that can accommodate the current box
+            // Пошук порожніх просторів, які можуть вмістити поточний блок
             if (box.w > space.w || box.h > space.h)
-                continue
+                continue;
 
-            // found the space; add the box to its top-left corner
+            // Знайдено простір; додати блок в його верхній лівий кут
             // ┌───────┬───────┐
-            // │  box  │       │
+            // │ блок  │       │
             // ├───────┘       │
-            // │         space │
+            // │       простір │
             // └───────────────┘
-            box.x = space.x
-            box.y = space.y
+            box.x = space.x;
+            box.y = space.y;
 
-            height = Math.max(height, box.y + box.h)
-            width = Math.max(width, box.x + box.w)
+            height = Math.max(height, box.y + box.h);
+            width = Math.max(width, box.x + box.w);
 
             if (box.w === space.w && box.h === space.h) {
-                // space matches the box exactly; remove it
-                const last = spaces.pop()
+                // простір точно відповідає блоку; видалити його
+                const last = spaces.pop();
                 if (i < spaces.length)
-                    spaces[i] = last
-            }
-            else if (box.h === space.h) {
-                // space matches the box height; update it accordingly
+                    spaces[i] = last;
+            } else if (box.h === space.h) {
+                // простір відповідає висоті блоку; оновити його відповідно
                 // ┌───────┬───────────────┐
-                // │  box  │ updated space │
+                // │  блок │оновлений про. │
                 // └───────┴───────────────┘
-                space.x += box.w
-                space.w -= box.w
-            }
-            else if (box.w === space.w) {
-                // space matches the box width; update it accordingly
+                space.x += box.w;
+                space.w -= box.w;
+            } else if (box.w === space.w) {
+                // простір відповідає ширині блоку; оновити його відповідно
                 // ┌───────────────┐
-                // │      box      │
+                // │      Блок     │
                 // ├───────────────┤
-                // │ updated space │
+                // │ оновлений про.│
                 // └───────────────┘
-                space.y += box.h
-                space.h -= box.h
-            }
-            else {
-                // otherwise the box splits the space into two spaces
+                space.y += box.h;
+                space.h -= box.h;
+            } else {
+                // в іншому випадку блок розділяє простір на два простори
                 // ┌───────┬───────────┐
-                // │  box  │ new space │
+                // │  блок │ новий про.│
                 // ├───────┴───────────┤
-                // │ updated space     │
+                // │ оновлений про.    │
                 // └───────────────────┘
                 spaces.push({
                     x: space.x + box.w,
                     y: space.y,
                     w: space.w - box.w,
-                    h: box.h
-                })
-                space.y += box.h
-                space.h -= box.h
+                    h: box.h,
+                });
+                space.y += box.h;
+                space.h -= box.h;
             }
-            break
+            break;
         }
     }
 
     return {
-        w: width, // container width
-        h: height, // container height
-        fill: (area / (width * height)) || 0 // space utilization
-    }
+        w: width, // ширина контейнера
+        h: height, // висота контейнера
+        fill: (area / (width * height)) || 0, // використання простору
+    };
 }
 
+// Загрузка розмірів блоків з файлу
 async function readBlockDimensionsFromFile() {
-    const filePath = './blocks.json'; // Specify the relative path to your JSON file
+    const filePath = './blocks.json';
     try {
         const response = await fetch(filePath);
         const dimensions = await response.json();
         return dimensions;
     } catch (error) {
-        console.error("Error reading block dimensions from file:", error);
+        console.error("Помилка зчитування розмірів блоків з файлу:", error);
         throw error;
     }
 }
 
+// Головна функція для виконання основної логіки програми
 async function main() {
-    const DRAW_TEXT = Math.random() > 0.5;
+    const DRAW_TEXT = true;
 
+    // Масив для збереження інформації про блоки
     const boxes = [];
+
+    // Зчитування розмірів блоків з файлу
     const blockDimensions = await readBlockDimensionsFromFile();
+
+    // Кількість блоків
     const N = blockDimensions.length;
 
-    for (let i = 0; i < blockDimensions.length; i++) {
+    // Цикл для обробки кожного блоку
+    for (let i = 0; i < N; i++) {
+        // Отримання розмірів та кольору для поточного блоку
         const { width, height } = blockDimensions[i];
         const c = `hsl(${Math.random() * 360 | 0}, 45%, 75%)`;
-        const box = { w: width, h: height, i, c };
+
+        // Створення об'єкта блока та додавання його до масиву
+        const box = { w: width, h: height, i: i + 1, c };
         boxes.push(box);
 
-        const t0 = performance.now();
+        // Вимірювання часу виконання алгоритму упаковки
         const result = potpack(boxes);
-        const t1 = performance.now();
-        const { w, h, fill } = result;
 
-        const aspect = w / h
-        canvas.width = w * dpr
-        canvas.height = h * dpr
+        // Розміри та використання простору контейнера
+        const { w, h } = result;
+
+        // Визначення відношення ширини до висоти для забезпечення адекватного відображення
+        const aspect = w / h;
+
+        // Налаштування розмірів та стилів canvas для відображення
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
         canvas.style.cssText = `
-		width: 256px;
-		height: ${256 / aspect}px;
-		width: ${w}px;
-		height: ${h}px;
-		outline: 1px solid black;
-		`
+            width: 256px;
+            height: ${256 / aspect}px;
+            width: ${w}px;
+            height: ${h}px;
+            outline: 1px solid black;
+        `;
 
-        ctx.save()
-        ctx.scale(dpr, dpr)
-        ctx.lineWidth = 0.5
-        ctx.strokeStyle = ''
-        ctx.textAlign = 'center'
-        ctx.font = '8px'
+        // Налаштування контексту малювання
+        ctx.save();
+        ctx.scale(dpr, dpr);
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = '';
+        ctx.textAlign = 'center';
+        ctx.font = '8px';
+
+        // Перебір блоків та їх відображення
         for (const box of boxes) {
-            ctx.save()
-            ctx.translate(box.x, box.y)
-            ctx.fillStyle = box.c
-            ctx.fillRect(0, 0, box.w, box.h)
-            ctx.beginPath()
-            ctx.moveTo(0, 0)
-            ctx.lineTo(box.w, 0)
-            ctx.lineTo(box.w, box.h)
-            ctx.lineTo(0, box.h)
-            ctx.lineTo(box.w, box.h)
-            ctx.stroke()
+            ctx.save();
+            ctx.translate(box.x, box.y);
+            ctx.fillStyle = box.c;
+            ctx.fillRect(0, 0, box.w, box.h);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(box.w, 0);
+            ctx.lineTo(box.w, box.h);
+            ctx.lineTo(0, box.h);
+            ctx.lineTo(box.w, box.h);
+            ctx.stroke();
 
+            // Виведення тексту на блоку, якщо DRAW_TEXT встановлено в true
             if (DRAW_TEXT) {
-                ctx.fillStyle = 'black'
-                ctx.font = `${Math.min(box.w, box.h) * 0.5}px`
-                ctx.fillText(box.i.toString(16).padStart(2, '0').toUpperCase(), box.w / 2, box.h / 2)
+                ctx.fillStyle = 'black';
+                ctx.font = `${Math.min(box.w, box.h) * 0.5}px`;
+                ctx.fillText(
+                    box.i.toString(),
+                    box.w / 2,
+                    box.h / 2
+                );
             }
 
-            ctx.restore()
+            ctx.restore();
         }
-        ctx.restore()
-        const t2 = performance.now()
 
+        ctx.restore();
 
-        debug.textContent = JSON.stringify
-            (
-                {
-                    ...result,
-                    i,
-                    N,
-                    progress: `${(((i + 1) / N) * 100).toFixed(1)}%`,
-                    timings:
-                    {
-                        potpack: (t1 - t0).toFixed(3),
-                        draw: (t2 - t1).toFixed(3),
-                        total: (t2 - t0).toFixed(3)
-                    }
-                },
-                null,
-                3
-            )
+        // Оновлення вмісту елементу HTML з інформацією про виконання
+        document.getElementById('fullnes').textContent = `Fullnes: ${(result.fill * 100).toFixed(0)}%`;
 
-        await new Promise(r => requestAnimationFrame(() => { r() }));
+        // Затримка для створення анімації та очікування завершення кадру
+        await new Promise((r) => requestAnimationFrame(() => { r(); }));
     }
 }
 
+// Отримання розміру пікселя пристрою та створення контексту малювання
 let dpr = window.devicePixelRatio;
 const ctx = canvas.getContext('2d');
 
-main().then(() => {
-    console.log('ok');
-}).catch(error => {
-    console.error(error.name, error.message);
-});
-
+// Запуск головної функції та обробка результатів
+main()
+    .then(() => {
+        console.log('Перемога');
+    })
+    .catch((error) => {
+        console.error(error.name, error.message);
+    });

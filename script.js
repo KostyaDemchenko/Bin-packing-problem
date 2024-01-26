@@ -156,7 +156,7 @@ async function main() {
             height: ${256 / aspect}px;
             width: ${w}px;
             height: ${h}px;
-            outline: 1px solid black;
+            outline: 1px solid var(--white);
         `;
 
         // Налаштування контексту малювання

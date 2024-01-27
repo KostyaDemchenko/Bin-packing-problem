@@ -11,18 +11,17 @@ function potpack(boxes) {
     // Відсортувати блоки за висотою у порядку спадання
     boxes.sort((a, b) => b.h - a.h);
 
-    // Прагнути до квадратного контейнера,
-    // трохи відкоригованого для використання площі менше 100%
+    // Робимо наш контейнер для блоків приблизно квадратним
     const startWidth = Math.max(Math.ceil(Math.sqrt(area / 0.95)), maxWidth);
 
-    // Почати з одного порожнього простору, необмеженого знизу
+    // Починаємо з порожнього простору, необмеженого знизу
     const spaces = [{ x: 0, y: 0, w: startWidth, h: Infinity }];
 
     let width = 0;
     let height = 0;
 
     for (const box of boxes) {
-        // Проглядати простори назад, щоб спочатку перевірити менші простори
+        // Переглядаємо доступний простір, щоб спочатку перевірити менші простори
         for (let i = spaces.length - 1; i >= 0; i--) {
             const space = spaces[i];
 
@@ -30,7 +29,8 @@ function potpack(boxes) {
             if (box.w > space.w || box.h > space.h)
                 continue;
 
-            // Знайдено простір; додати блок в його верхній лівий кут
+            // Якщо знайдено простір; 
+            // додати блок в його верхній лівий кут
             // ┌───────┬───────┐
             // │ блок  │       │
             // ├───────┘       │
@@ -43,19 +43,19 @@ function potpack(boxes) {
             width = Math.max(width, box.x + box.w);
 
             if (box.w === space.w && box.h === space.h) {
-                // простір точно відповідає блоку; видалити його
+                // простір точно відповідає блоку; видаляємо його
                 const last = spaces.pop();
                 if (i < spaces.length)
                     spaces[i] = last;
             } else if (box.h === space.h) {
-                // простір відповідає висоті блоку; оновити його відповідно
+                // простір відповідає висоті блоку; оновляємо його
                 // ┌───────┬───────────────┐
                 // │  блок │оновлений про. │
                 // └───────┴───────────────┘
                 space.x += box.w;
                 space.w -= box.w;
             } else if (box.w === space.w) {
-                // простір відповідає ширині блоку; оновити його відповідно
+                // простір відповідає ширині блоку; оновляємо його
                 // ┌───────────────┐
                 // │      Блок     │
                 // ├───────────────┤
@@ -103,7 +103,7 @@ async function readBlockDimensionsFromFile() {
     }
 }
 
-// Головна функція для виконання основної логіки програми
+// Головна функція основної логіки
 async function main() {
     const DRAW_TEXT = true;
 
@@ -148,10 +148,10 @@ async function main() {
         // Визначення відношення ширини до висоти для забезпечення адекватного відображення
         const aspect = w / h;
 
-        // Налаштування розмірів та стилів canvas для відображення
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
-        canvas.style.cssText = `
+        // Налаштування розмірів та стилів container для відображення
+        container.width = w * dpr;
+        container.height = h * dpr;
+        container.style.cssText = `
             width: 256px;
             height: ${256 / aspect}px;
             width: ${w}px;
@@ -159,7 +159,7 @@ async function main() {
             outline: 1px solid var(--white);
         `;
 
-        // Налаштування контексту малювання
+        // Налаштування контексту малювання блоків
         ctx.save();
         ctx.scale(dpr, dpr);
         ctx.lineWidth = 0.5;
@@ -181,7 +181,7 @@ async function main() {
             ctx.lineTo(box.w, box.h);
             ctx.stroke();
 
-            // Виведення тексту на блоку, якщо DRAW_TEXT встановлено в true
+            // Виведення номеру блока
             if (DRAW_TEXT) {
                 ctx.fillStyle = 'black';
                 ctx.font = `${Math.min(box.w, box.h) * 0.5}px`;
@@ -207,18 +207,13 @@ async function main() {
 
 // Отримання розміру пікселя пристрою та створення контексту малювання
 let dpr = window.devicePixelRatio;
-const ctx = canvas.getContext('2d');
+const ctx = container.getContext('2d');
 
-// Запуск головної функції та обробка результатів
+// Визиваємо головну функцію та обробляємо результати
 main()
     .then(() => {
-        console.log('Перемога');
+        console.log('Перемога, все спрацювало!');
     })
     .catch((error) => {
         console.error(error.name, error.message);
     });
-
-
-// todo
-// привети код в порядок (полностью его просмотреть)
-// привести коментарии в порядок
